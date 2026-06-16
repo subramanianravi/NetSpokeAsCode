@@ -1,0 +1,24 @@
+# Staging environment — non-sensitive values only.
+# Sensitive values (API token, PSK) are injected via --extra-vars secrets in CI.
+
+tunnel_name:   "staging-to-netskope"
+tunnel_type:   "ipsec"
+primary_pop:   "US-SJC1"
+secondary_pop: ""
+cpe_ip:        "203.0.113.20"
+
+private_app_name:     "staging-internal-app"
+private_app_host:     "app.staging.internal"
+private_app_protocol: "tcp"
+private_app_port:     443
+publisher_name:       "staging-publisher-1"
+
+policy_name:         "staging-block-social-media"
+policy_action:       "block"
+source_users:        ["staging-users"]
+destination_domains: ["facebook.com", "instagram.com"]
+dlp_profile:         ""
+
+steering_config_name: "staging-steering"
+steering_mode:        "client"
+steering_exceptions:  ["8.8.8.8"]

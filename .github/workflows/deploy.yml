@@ -1,0 +1,130 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: "Provisioning tool"
+        required: true
+        default: terraform
+        type: choice
+        options:
+          - terraform
+          - ansible
+          - both
+      environment:
+        description: "Target environment"
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  # ── Terraform ──────────────────────────────────────────────────────────────
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    if: ${{ inputs.tool == 'terraform' || inputs.tool == 'both' }}
+    environment: ${{ inputs.environment }}
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    env:
+      TF_VAR_netskope_tenant:    ${{ secrets.NETSKOPE_TENANT }}
+      TF_VAR_netskope_api_token: ${{ secrets.NETSKOPE_API_TOKEN }}
+      TF_VAR_tunnel_psk:         ${{ secrets.TUNNEL_PSK }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.5"
+
+      - name: Init
+        run: terraform init
+
+      - name: Plan
+        run: terraform plan -out=tfplan -var-file="${{ inputs.environment }}.tfvars"
+
+      - name: Upload plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ inputs.environment }}
+          path: terraform/tfplan
+          retention-days: 1
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: ${{ inputs.tool == 'terraform' || inputs.tool == 'both' }}
+    environment: ${{ inputs.environment }}
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    env:
+      TF_VAR_netskope_tenant:    ${{ secrets.NETSKOPE_TENANT }}
+      TF_VAR_netskope_api_token: ${{ secrets.NETSKOPE_API_TOKEN }}
+      TF_VAR_tunnel_psk:         ${{ secrets.TUNNEL_PSK }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.5"
+
+      - name: Init
+        run: terraform init
+
+      - name: Download plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ inputs.environment }}
+          path: terraform
+
+      - name: Apply
+        run: terraform apply -auto-approve tfplan
+
+      - name: Show outputs
+        run: terraform output
+
+  # ── Ansible ────────────────────────────────────────────────────────────────
+  ansible-deploy:
+    name: Ansible Deploy
+    runs-on: ubuntu-latest
+    if: ${{ inputs.tool == 'ansible' || inputs.tool == 'both' }}
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Write inventory
+        run: cp ansible/inventory/hosts.yml.example ansible/inventory/hosts.yml
+
+      - name: Run playbook
+        run: |
+          ansible-playbook \
+            -i ansible/inventory/hosts.yml \
+            ansible/site.yml \
+            --extra-vars "netskope_tenant=${{ secrets.NETSKOPE_TENANT }}" \
+            --extra-vars "netskope_api_token=${{ secrets.NETSKOPE_API_TOKEN }}" \
+            --extra-vars "tunnel_psk=${{ secrets.TUNNEL_PSK }}" \
+            --extra-vars "@ansible/environments/${{ inputs.environment }}.yml"

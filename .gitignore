@@ -22,6 +22,8 @@ secrets.yaml
 *.tfstate
 *.tfstate.backup
 *.tfvars
+!terraform/staging.tfvars
+!terraform/production.tfvars
 override.tf
 override.tf.json
 
