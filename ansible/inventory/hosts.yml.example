@@ -1,0 +1,8 @@
+# Ansible inventory for NetSpokeAsCode.
+# The Netskope API is the only target — no SSH hosts required.
+# Copy to inventory/hosts.yml.
+
+all:
+  hosts:
+    localhost:
+      ansible_connection: local

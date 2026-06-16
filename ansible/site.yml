@@ -1,0 +1,11 @@
+---
+- name: Provision Netskope SASE
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  roles:
+    - tunnels
+    - ztna
+    - policies
+    - steering

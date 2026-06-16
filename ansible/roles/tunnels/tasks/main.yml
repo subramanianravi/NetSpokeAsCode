@@ -1,0 +1,41 @@
+---
+- name: Create primary IPsec/GRE tunnel
+  uri:
+    url: "https://{{ netskope_tenant }}/api/v2/infrastructure/tunnels"
+    method: POST
+    headers:
+      Netskope-Api-Token: "{{ netskope_api_token }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      name: "{{ tunnel_name }}"
+      type: "{{ tunnel_type }}"
+      pop:  "{{ primary_pop }}"
+      psk:  "{{ tunnel_psk }}"
+      cpe_ip: "{{ cpe_ip }}"
+    status_code: [200, 201]
+  register: primary_tunnel
+
+- name: Create secondary tunnel for HA
+  uri:
+    url: "https://{{ netskope_tenant }}/api/v2/infrastructure/tunnels"
+    method: POST
+    headers:
+      Netskope-Api-Token: "{{ netskope_api_token }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      name: "{{ tunnel_name }}-ha"
+      type: "{{ tunnel_type }}"
+      pop:  "{{ secondary_pop }}"
+      psk:  "{{ tunnel_psk }}"
+      cpe_ip: "{{ cpe_ip }}"
+    status_code: [200, 201]
+  when: secondary_pop | length > 0
+  register: secondary_tunnel
+
+- name: Show tunnel IDs
+  debug:
+    msg:
+      - "Primary tunnel ID: {{ primary_tunnel.json.id }}"
+      - "Secondary tunnel ID: {{ secondary_tunnel.json.id | default('N/A') }}"

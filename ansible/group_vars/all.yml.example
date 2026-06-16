@@ -1,0 +1,28 @@
+# Copy to group_vars/all.yml and fill in your values.
+# Never commit all.yml — it is excluded by .gitignore.
+
+netskope_tenant:    "acme.goskope.com"
+netskope_api_token: "YOUR_API_TOKEN_HERE"
+
+tunnel_name:   "hq-to-netskope"
+tunnel_type:   "ipsec"
+primary_pop:   "US-SJC1"
+secondary_pop: "US-LAX1"
+tunnel_psk:    "CHANGE_ME_PSK"
+cpe_ip:        "203.0.113.10"
+
+private_app_name:     "internal-jira"
+private_app_host:     "jira.internal.acme.com"
+private_app_protocol: "tcp"
+private_app_port:     443
+publisher_name:       "hq-publisher-1"
+
+policy_name:         "block-social-media"
+policy_action:       "block"
+source_users:        ["all-users"]
+destination_domains: ["facebook.com", "instagram.com", "tiktok.com"]
+dlp_profile:         ""
+
+steering_config_name: "default-steering"
+steering_mode:        "client"
+steering_exceptions:  ["8.8.8.8", "internal.acme.com"]

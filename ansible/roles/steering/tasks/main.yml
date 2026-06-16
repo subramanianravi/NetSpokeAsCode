@@ -1,0 +1,19 @@
+---
+- name: Create steering configuration
+  uri:
+    url: "https://{{ netskope_tenant }}/api/v2/steering/configurations"
+    method: POST
+    headers:
+      Netskope-Api-Token: "{{ netskope_api_token }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      name:       "{{ steering_config_name }}"
+      mode:       "{{ steering_mode }}"
+      exceptions: "{{ steering_exceptions }}"
+    status_code: [200, 201]
+  register: steering_config
+
+- name: Show steering config ID
+  debug:
+    msg: "Steering config ID: {{ steering_config.json.id }}"

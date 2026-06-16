@@ -1,0 +1,30 @@
+---
+- name: Look up publisher ID
+  uri:
+    url: "https://{{ netskope_tenant }}/api/v2/steering/publishers?name={{ publisher_name | urlencode }}"
+    method: GET
+    headers:
+      Netskope-Api-Token: "{{ netskope_api_token }}"
+    status_code: 200
+  register: publisher_lookup
+
+- name: Create private application
+  uri:
+    url: "https://{{ netskope_tenant }}/api/v2/steering/apps/private"
+    method: POST
+    headers:
+      Netskope-Api-Token: "{{ netskope_api_token }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      name:       "{{ private_app_name }}"
+      host:       "{{ private_app_host }}"
+      protocol:   "{{ private_app_protocol }}"
+      port:       "{{ private_app_port }}"
+      publishers: ["{{ publisher_lookup.json.data[0].id }}"]
+    status_code: [200, 201]
+  register: private_app
+
+- name: Show private app ID
+  debug:
+    msg: "Private app ID: {{ private_app.json.id }}"

@@ -29,6 +29,8 @@ override.tf.json
 *.retry
 inventory/host_vars/
 inventory/group_vars/
+ansible/inventory/hosts.yml
+ansible/group_vars/all.yml
 
 # Python
 __pycache__/
